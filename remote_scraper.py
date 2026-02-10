@@ -59,6 +59,7 @@ print(df.location.value_counts().head(10))
 
 # Convert tags to comma separated for storage
 df['tags'] = df['tags'].apply(lambda x: ', '.join(x) if isinstance(x, list) else x)
+df['source'] = 'remoteok'
 
 # Create database and save
 engine = create_engine('sqlite:///data/jobs.db')
