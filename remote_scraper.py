@@ -2,7 +2,7 @@
 import requests
 import pandas as pd
 import numpy as np
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 # Get data
 url = 'https://remoteok.com/api'
@@ -61,9 +61,22 @@ print(df.location.value_counts().head(10))
 df['tags'] = df['tags'].apply(lambda x: ', '.join(x) if isinstance(x, list) else x)
 df['source'] = 'remoteok'
 
+# Set date to SQL compatible
+df['date'] = df['date'].astype(str)
+
 # Create database and save
 engine = create_engine('sqlite:///data/jobs.db')
-df.to_sql('jobs', engine, if_exists='append', index=False)
+with engine.connect() as conn:
+    for _, row in df.iterrows():
+        try:
+            conn.execute(text("""
+                INSERT OR IGNORE INTO jobs
+                (title, company, location, salary_min, salary_max, tags, date, url, source)
+                VALUES (:title, :company, :location, :salary_min, :salary_max, :tags, :date, :url, :source)
+            """), dict(row))
+        except Exception as e:
+            print(f'Error: {e}')
+    conn.commit()
 
 # Verify working
 saved = pd.read_sql('SELECT COUNT(*) as total FROM jobs', engine)

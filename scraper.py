@@ -41,4 +41,4 @@ print(jobs[1])
 import pandas as pd
 
 df = pd.DataFrame(jobs)
-print(df.head(10))
+print(df.head(10)) 

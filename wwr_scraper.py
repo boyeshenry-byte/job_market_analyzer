@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 import numpy as np
 from bs4 import BeautifulSoup
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 # Get data
 url = 'https://weworkremotely.com/remote-jobs'
@@ -64,7 +64,17 @@ print(f'\nNumber of jobs with salary data: {df.salary_range.notna().sum()}')
 df['source'] = 'weworkremotely'
 
 engine = create_engine('sqlite:///data/jobs.db')
-df.to_sql('jobs', engine, if_exists='append', index=False)
+with engine.connect() as conn:
+    for _, row in df.iterrows():
+        try:
+            conn.execute(text("""
+                insert or ignore into jobs
+                (title, company, location, salary_range, job_type, region, source)
+                values (:title, :company, :location, :salary_range, :job_type, :region, :source)
+            """), dict(row))
+        except Exception as e:
+            print(f'Error: {e}')
+    conn.commit() 
 
 saved = pd.read_sql('SELECT COUNT(*) as total FROM jobs', engine)
 print(f'Total jobs in database: {saved['total'][0]}')

@@ -16,7 +16,8 @@ with engine.connect() as conn:
             region TEXT,
             date TEXT,
             url TEXT,
-            source TEXT
+            source TEXT,
+            unique(title, company, source)       
         )
     """))
     conn.commit()
