@@ -40,3 +40,13 @@ st.header('Job Types (We Work Remotely)')
 wwr = df[df['source'] == 'weworkremotely']
 job_types = wwr['job_type'].value_counts()
 st.bar_chart(job_types)
+
+st.header('Data & Analytics Roles')
+data_keywords = ['data', 'analyst','analytics', 'machine learning', 'data science',
+                 'data engineer', 'buisness intelligence']
+
+data_jobs = df[df['title'].str.lower().str.contains('|'.join(data_keywords), na=False)]
+st.metric('Data/Analytics Roles', len(data_jobs))
+
+if not data_jobs.empty:
+    st.dataframe(data_jobs[['title', 'company', 'location', 'source']].reset_index(drop=True))
