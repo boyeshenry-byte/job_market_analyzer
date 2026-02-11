@@ -5,77 +5,118 @@ import numpy as np
 from bs4 import BeautifulSoup
 from sqlalchemy import create_engine, text
 
-# Get data
-url = 'https://weworkremotely.com/remote-jobs'
-headers = {'User-Agent': 'job_market_analyzer'}
-response = requests.get(url, headers=headers)
+def fetch_jobs():
+    """
+    This function fetches jobs and returns them in a DataFrame
 
-print(response.status_code)
+    This function takes no arguments and returns a DataFrame of job postings
 
-soup = BeautifulSoup(response.text, 'lxml')
-job_cards = soup.find_all('li', class_='new-listing-container')
+    : attributes :
 
-print(f'Found {len(job_cards)} job cards')
+    title : str
+      the title of the position listed
+    company : str
+        the company the position is with
+    location : str
+        the location of the position
+    categories : str
+        relevant information to the job
+    
+    """
 
-jobs = []
+    # Get data
+    url = 'https://weworkremotely.com/remote-jobs'
+    headers = {'User-Agent': 'job_market_analyzer'}
+    response = requests.get(url, headers=headers)
 
-for card in job_cards:
-    title = card.find('h3', class_='new-listing__header__title')
-    company = card.find('p', class_='new-listing__company-name')
-    location = card.find('p', class_='new-listing__company-headquarters')
-    categories = card.find_all('p', class_='new-listing__categories__category')
+    soup = BeautifulSoup(response.text, 'lxml')
+    job_cards = soup.find_all('li', class_='new-listing-container')
 
-    job = {
-        'title': title.text.strip() if title else None,
-        'company': company.text.strip() if company else None,
-        'location': location.text.strip() if location else None,
-        'categories': [c.text.strip() for c in categories] if categories else []
-    }
-    jobs.append(job)
+    jobs = []
 
-df = pd.DataFrame(jobs)
+    for card in job_cards:
+        title = card.find('h3', class_='new-listing__header__title')
+        company = card.find('p', class_='new-listing__company-name')
+        location = card.find('p', class_='new-listing__company-headquarters')
+        categories = card.find_all('p', class_='new-listing__categories__category')
 
-print(df.shape)
-print(df.head())
+        job = {
+            'title': title.text.strip() if title else None,
+            'company': company.text.strip() if company else None,
+            'location': location.text.strip() if location else None,
+            'categories': [c.text.strip() for c in categories] if categories else []
+        }
+        jobs.append(job)
 
-# Get categories data
-for job in jobs:
-    cats = job['categories']
-    job['job_type'] = None
-    job['salary_range'] = None
-    job['region'] = None
+    df = pd.DataFrame(jobs)
+    return df
 
-    for c in cats:
-        if c in ['Full-Time', 'Contract', 'Part-Time', 'Freelance']:
-            job['job_type'] = c
-        elif '$' in c or 'USD' in c:
-            job['salary_range'] = c
-        elif c != 'Featured':
-            job['region'] = c
+def clean_data(df):
+    """
+    This function takes a DataFrame from fetch_jobs() and divides the categories into
+    job_type (full-time, contract, part-time, freelance), salary_range, and region. 
+    It returns a cleaned DataFrame.
+    
+    :param df: A DataFrame from fetch_jobs()
+    """
+    
+    # Storage variables
+    job_types = []
+    salary_range = []
+    region = []
 
-# Rebuild DF
-df = pd.DataFrame(jobs)
-df.drop(columns=['categories'], inplace=True)
-
-print(df.head(10))
-print(f'\nNumber of jobs with salary data: {df.salary_range.notna().sum()}')
-
-# Store data
-df['source'] = 'weworkremotely'
-
-engine = create_engine('sqlite:///data/jobs.db')
-with engine.connect() as conn:
     for _, row in df.iterrows():
-        try:
-            conn.execute(text("""
-                insert or ignore into jobs
-                (title, company, location, salary_range, job_type, region, source)
-                values (:title, :company, :location, :salary_range, :job_type, :region, :source)
-            """), dict(row))
-        except Exception as e:
-            print(f'Error: {e}')
-    conn.commit() 
+        cats = row['categories']
+        jt, sr, rg = None, None, None
+        for c in cats:
+            if c in ['Full-Time', 'Contract', 'Part-Time', 'Freelance']:
+                jt = c
+            elif '$' in c or 'USD' in c:
+                sr = c
+            elif c != 'Featured':
+                rg = c
+        job_types.append(jt)
+        salary_range.append(sr)
+        region.append(rg)
 
-saved = pd.read_sql('SELECT COUNT(*) as total FROM jobs', engine)
-print(f'Total jobs in database: {saved['total'][0]}')
+    # Rebuild DF
+    df['job_types'] = job_types
+    df['salary_range'] = salary_range
+    df['region'] = region
+    df.drop(columns=['categories'], inplace=True)
 
+    # Store data
+    df['source'] = 'weworkremotely'
+
+    return df
+
+def save_db(df):
+    """
+    This function takes a cleaned DataFrame and saves it as an SQL Database
+    
+    :param df: A cleaned DataFrame
+    """
+
+    engine = create_engine('sqlite:///data/jobs.db')
+    with engine.connect() as conn:
+        for _, row in df.iterrows():
+            try:
+                conn.execute(text("""
+                    insert or ignore into jobs
+                    (title, company, location, salary_range, job_type, region, source)
+                    values (:title, :company, :location, :salary_range, :job_type, :region, :source)
+                """), dict(row))
+            except Exception as e:
+                print(f'Error: {e}')
+        conn.commit() 
+
+    saved = pd.read_sql('SELECT COUNT(*) as total FROM jobs', engine)
+    print(f'Total jobs in database: {saved['total'][0]}')
+
+if __name__ == '__main__':
+    print('Fetching jobs from We Work Remotely')
+    df = fetch_jobs()
+    print(f'Found {len(df)} jobs')
+    df = clean_data(df)
+    save_db(df)
+    print('Done!')

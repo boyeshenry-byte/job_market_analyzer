@@ -42,7 +42,7 @@ job_types = wwr['job_type'].value_counts()
 st.bar_chart(job_types)
 
 st.header('Data & Analytics Roles')
-data_keywords = ['data', 'analyst','analytics', 'machine learning', 'data science',
+data_keywords = ['data', 'data analyst', 'data science', 'data engineer', 'analytics', 'machine learning', 'data science',
                  'data engineer', 'buisness intelligence']
 
 data_jobs = df[df['title'].str.lower().str.contains('|'.join(data_keywords), na=False)]
