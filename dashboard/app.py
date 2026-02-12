@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from sqlalchemy import create_engine
+from config import DBPATH
 
 def create_dashboard():
     """
@@ -21,7 +22,7 @@ def create_dashboard():
 
     """
     # create dashboard
-    engine = create_engine('sqlite:///data/jobs.db')
+    engine = create_engine(DBPATH)
     df = pd.read_sql("select * from jobs", engine)
 
     st.title('Job Market Analyzer')

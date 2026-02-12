@@ -2,8 +2,10 @@
 import requests
 import pandas as pd
 import numpy as np
+import time
 from bs4 import BeautifulSoup
 from sqlalchemy import create_engine, text
+from config import WWR_URL, HEADERS, DBPATH
 
 def fetch_jobs():
     """
@@ -25,9 +27,20 @@ def fetch_jobs():
     """
 
     # Get data
-    url = 'https://weworkremotely.com/remote-jobs'
-    headers = {'User-Agent': 'job_market_analyzer'}
-    response = requests.get(url, headers=headers)
+    url = WWR_URL
+    headers = HEADERS
+    time.sleep(1)
+    try:
+        response = requests.get(url, headers=headers)
+    except requests.exceptions.ConnectionError:
+        print('Error: Cannot connect to the server')
+        return pd.DataFrame()
+    except requests.exceptions.Timeout:
+        print('Error: Request took too long')
+        return pd.DataFrame()
+    except ValueError:
+        print("Response wasn't valid JSON")
+        return pd.DataFrame()
 
     soup = BeautifulSoup(response.text, 'lxml')
     job_cards = soup.find_all('li', class_='new-listing-container')
@@ -61,7 +74,7 @@ def clean_data(df):
     """
     
     # Storage variables
-    job_types = []
+    job_type = []
     salary_range = []
     region = []
 
@@ -75,12 +88,12 @@ def clean_data(df):
                 sr = c
             elif c != 'Featured':
                 rg = c
-        job_types.append(jt)
+        job_type.append(jt)
         salary_range.append(sr)
         region.append(rg)
 
     # Rebuild DF
-    df['job_types'] = job_types
+    df['job_type'] = job_type
     df['salary_range'] = salary_range
     df['region'] = region
     df.drop(columns=['categories'], inplace=True)
@@ -97,7 +110,7 @@ def save_db(df):
     :param df: A cleaned DataFrame
     """
 
-    engine = create_engine('sqlite:///data/jobs.db')
+    engine = create_engine(DBPATH)
     with engine.connect() as conn:
         for _, row in df.iterrows():
             try:
@@ -116,7 +129,10 @@ def save_db(df):
 if __name__ == '__main__':
     print('Fetching jobs from We Work Remotely')
     df = fetch_jobs()
-    print(f'Found {len(df)} jobs')
-    df = clean_data(df)
-    save_db(df)
-    print('Done!')
+    if df.empty:
+        print('No jobs fetched. Exiting.')
+    else:
+        print(f'Found {len(df)} jobs')
+        df = clean_data(df)
+        save_db(df)
+        print('Done!')

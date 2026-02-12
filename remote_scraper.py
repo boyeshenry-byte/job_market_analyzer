@@ -2,7 +2,9 @@
 import requests
 import pandas as pd
 import numpy as np
+import time
 from sqlalchemy import create_engine, text
+from config import REMOTEOKURL, HEADERS, DBPATH
 
 
 
@@ -32,11 +34,23 @@ def fetch_jobs():
         the url for the job posting
     """
     # Get data
-    url = 'https://remoteok.com/api'
-    headers = {'User-Agent': "job_market_analyzer"}
-    response = requests.get(url, headers=headers)
+    url = REMOTEOKURL
+    headers = HEADERS
+    time.sleep(1)
+    try:
+        response = requests.get(url, headers=headers)
+        data = response.json()
+    except requests.exceptions.ConnectionError:
+        print('Error: Cannot connect to the server')
+        return pd.DataFrame()
+    except requests.exceptions.Timeout:
+        print('Error: Request took too long')
+        return pd.DataFrame()
+    except ValueError:
+        print("Response wasn't valid JSON")
+        return pd.DataFrame()
 
-    data = response.json()
+    
 
     jobs = []
 
@@ -92,7 +106,7 @@ def save_db(df):
     :param df: A cleaned DataFrame
     """
     # Create database and save
-    engine = create_engine('sqlite:///data/jobs.db')
+    engine = create_engine(DBPATH)
     with engine.connect() as conn:
         for _, row in df.iterrows():
             try:
@@ -112,7 +126,10 @@ def save_db(df):
 if __name__ == '__main__':
     print('Fetching jobs from RemoteOK...')
     df = fetch_jobs()
-    print(f'Found {len(df)} jobs')
-    df = clean_data(df)
-    save_db(df)
-    print('Done!')
+    if df.empty:
+        print('No jobs fetched. Exiting.')
+    else:
+        print(f'Found {len(df)} jobs')
+        df = clean_data(df)
+        save_db(df)
+        print('Done!')

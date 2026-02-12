@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine, text
+from config import DBPATH
 
 def make_db():
     """
@@ -32,7 +33,7 @@ def make_db():
         which job board the job is listed on
     
     """
-    engine = create_engine("sqlite:///data/jobs.db")
+    engine = create_engine(DBPATH)
 
     with engine.connect() as conn:
         conn.execute(text("""

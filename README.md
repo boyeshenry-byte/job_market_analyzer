@@ -36,7 +36,7 @@ job_scraper/
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.14+
+- Python 3.10+
 
 ### Installation
 ```bash
@@ -59,10 +59,10 @@ Execute in order:
 ---
 
 ## Dashboard Preview
-![Dashboard Overview](screenshot_1.png)
-![Skills](screenshot_2.png)
-![Salaries and Job types](screenshot_3.png)
-![Data Roles](screenshot_4.png)
+![Dashboard Overview](figures/screenshot_1.png)
+![Skills](figures/screenshot_2.png)
+![Salaries and Job types](figures/screenshot_3.png)
+![Data Roles](figures/screenshot_4.png)
 
 ## 🛠️ Technologies Used
 
