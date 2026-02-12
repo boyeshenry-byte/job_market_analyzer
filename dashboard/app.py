@@ -1,7 +1,12 @@
 import streamlit as st
 import pandas as pd
 from sqlalchemy import create_engine
+
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from config import DBPATH
+
 
 def create_dashboard():
     """
