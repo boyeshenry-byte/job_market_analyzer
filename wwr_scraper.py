@@ -125,7 +125,7 @@ def save_db(df):
         conn.commit() 
 
     saved = pd.read_sql('SELECT COUNT(*) as total FROM jobs', engine)
-    print(f'Total jobs in database: {saved['total'][0]}')
+    print(f"Total jobs in database: {saved['total'][0]}")
 
 if __name__ == '__main__':
     print('Fetching jobs from We Work Remotely')
