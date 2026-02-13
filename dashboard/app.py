@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from config import DBPATH
+from config import DB_URL
 
 
 def create_dashboard():
@@ -27,7 +27,7 @@ def create_dashboard():
 
     """
     # create dashboard
-    engine = create_engine(DBPATH)
+    engine = create_engine(DB_URL)
     df = pd.read_sql("select * from jobs", engine)
 
     st.title('Job Market Analyzer')

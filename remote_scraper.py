@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import time
 from sqlalchemy import create_engine, text
-from config import REMOTEOKURL, HEADERS, DBPATH
+from config import REMOTEOKURL, HEADERS, DB_URL
 
 
 
@@ -106,14 +106,15 @@ def save_db(df):
     :param df: A cleaned DataFrame
     """
     # Create database and save
-    engine = create_engine(DBPATH)
+    engine = create_engine(DB_URL)
     with engine.connect() as conn:
         for _, row in df.iterrows():
             try:
               conn.execute(text("""
-                    INSERT OR IGNORE INTO jobs
+                    INSERT INTO jobs
                    (title, company, location, salary_min, salary_max, tags, date, url, source)
-                   VALUES (:title, :company, :location, :salary_min, :salary_max, :tags, :date, :url, :source)
+                   VALUES (:title, :company, :location, :salary_min, :salary_max, :tags, :date, :url, :source) 
+                    ON CONFLICT DO NOTHING
                """), dict(row))
             except Exception as e:
                print(f'Error: {e}')

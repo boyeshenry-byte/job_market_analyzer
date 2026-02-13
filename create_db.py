@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, text
-from config import DBPATH
+from config import DB_URL
 
 def make_db():
     """
@@ -33,7 +33,7 @@ def make_db():
         which job board the job is listed on
     
     """
-    engine = create_engine(DBPATH)
+    engine = create_engine(DB_URL)
 
     with engine.connect() as conn:
         conn.execute(text("""

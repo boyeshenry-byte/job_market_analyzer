@@ -5,7 +5,7 @@ import numpy as np
 import time
 from bs4 import BeautifulSoup
 from sqlalchemy import create_engine, text
-from config import WWR_URL, HEADERS, DBPATH
+from config import WWR_URL, HEADERS, DB_URL
 
 def fetch_jobs():
     """
@@ -110,14 +110,15 @@ def save_db(df):
     :param df: A cleaned DataFrame
     """
 
-    engine = create_engine(DBPATH)
+    engine = create_engine(DB_URL)
     with engine.connect() as conn:
         for _, row in df.iterrows():
             try:
                 conn.execute(text("""
-                    insert or ignore into jobs
+                    insert into jobs
                     (title, company, location, salary_range, job_type, region, source)
                     values (:title, :company, :location, :salary_range, :job_type, :region, :source)
+                    on conflict do nothing
                 """), dict(row))
             except Exception as e:
                 print(f'Error: {e}')
