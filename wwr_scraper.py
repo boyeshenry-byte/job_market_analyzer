@@ -121,7 +121,7 @@ def save_db(df):
                     on conflict do nothing
                 """), dict(row))
             except Exception as e:
-                print(f'Error: {e}')
+                print(f"Error: {e}")
         conn.commit() 
 
     saved = pd.read_sql('SELECT COUNT(*) as total FROM jobs', engine)
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     if df.empty:
         print('No jobs fetched. Exiting.')
     else:
-        print(f'Found {len(df)} jobs')
+        print(f"Found {len(df)} jobs")
         df = clean_data(df)
         save_db(df)
         print('Done!')
