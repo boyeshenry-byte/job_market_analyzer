@@ -5,12 +5,8 @@ load_dotenv()
 
 DB_URL = os.getenv("DATABASE_URL")
 
-if DB_URL is None:
-    try:
-        import streamlit as st
-        DB_URL = st.secrects["DATABASE_URL"]
-    except:
-        pass
+st.write("Checking secrets...")
+st.write(list(st.secrets.keys()))
 
 HEADERS = {"User-Agent": "job-market-analyzer"}
 REMOTEOKURL = "https://remoteok.com/api"
