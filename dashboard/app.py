@@ -67,6 +67,12 @@ def create_dashboard():
     job_types = wwr['job_type'].value_counts()
     st.bar_chart(job_types)
 
+    # Hacker News Jobs
+    st.header("Top Companies (Hacker News)")
+    hn = df[df['source'] == "hackernews"]
+    company_counts = hn['company'].value_counts().head(15)
+    st.bar_chart(company_counts)
+
     st.header('Data & Analytics Roles')
     data_keywords = ['data analyst', 'data science', 'data engineer', 
                      'analytics', 'machine learning', 'business intelligence',

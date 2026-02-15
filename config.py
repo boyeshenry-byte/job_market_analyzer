@@ -5,8 +5,7 @@ load_dotenv()
 
 DB_URL = os.getenv("DATABASE_URL")
 
-st.write("Checking secrets...")
-st.write(list(st.secrets.keys()))
+
 
 HEADERS = {"User-Agent": "job-market-analyzer"}
 REMOTEOKURL = "https://remoteok.com/api"
