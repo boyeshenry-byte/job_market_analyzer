@@ -4,8 +4,10 @@ from sqlalchemy import create_engine
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from config import DB_URL
+try:
+    DB_URL = st.secrets("DATABASE_URL")
+except:
+    from config import DB_URL
 
 
 def create_dashboard():
