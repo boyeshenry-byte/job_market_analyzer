@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 import sys
 import os
 try:
-    DB_URL = st.secrets("DATABASE_URL")
+    DB_URL = st.secrets["DATABASE_URL"]
 except:
     from config import DB_URL
 
