@@ -1,12 +1,13 @@
 import streamlit as st
 import pandas as pd
 from sqlalchemy import create_engine
-
+from datetime import datetime
 import sys
 import os
 try:
     DB_URL = st.secrets["DATABASE_URL"]
 except:
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from config import DB_URL
 
 
@@ -83,6 +84,32 @@ def create_dashboard():
 
     if not data_jobs.empty:
         st.dataframe(data_jobs[['title', 'company', 'location', 'source']].reset_index(drop=True))
+
+    st.header("Rise of Remote Work (HackerNews)")
+    hn = df[df["source"] == 'hackernews'].copy()
+
+    # parse month-year into datetime 
+    hn["parsed_date"] = hn["date"].apply(
+        lambda x: datetime.strptime(x, "%B %Y") if isinstance(x, str) and x else None
+    )
+    hn = hn.dropna(subset=["parsed_date"])
+
+    # flag remote jobs
+    hn['is_remote'] = hn['location'].str.lower().str.contains('remote', na=False)
+
+    # group by month and calculate remote percent
+    monthly = hn.groupby("parsed_date").agg(
+        total=('is_remote', 'count'),
+        remote = ('is_remote', 'sum')
+    ).reset_index()
+    monthly["remote_pct"] = (monthly['remote']/ monthly["total"] * 100).round(1)
+    monthly = monthly.sort_values("parsed_date")
+    monthly["month"] = monthly["parsed_date"].dt.strftime("%Y-%m")
+
+    # Plot
+
+    st.line_chart(monthly.set_index("month")["remote_pct"])
+    st.caption("Percentage of job postings mentioning 'remote' over time")
 
 if __name__ == '__main__':
     create_dashboard()
