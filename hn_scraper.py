@@ -5,11 +5,62 @@ import time
 import html
 import re
 from sqlalchemy import create_engine, text
-from config import HN_URL, DB_URL
+from config import DB_URL
 
-def fetch_jobs():
+def get_scraped_threads():
+    """
+    This function checks which months we have already scraped so we can ignore them
+    """
+    engine = create_engine(DB_URL)
+    result = pd.read_sql(
+        "SELECT DISTINCT date FROM jobs WHERE source = 'hackernews'",
+        engine
+    )
+
+    return result['date'].tolist()
+
+def get_thread_ids():
+    """
+    This function fetches HN's who's hiring thread ID's and returns them as a variable to use for scraping.
+
+    : attributes :
+    
+    thread_ids : str
+        the saved url for scraping
+
+    """
+    thread_ids = []
+    seen = set()
+    page = 0
+    while True:
+        url = f"https://hn.algolia.com/api/v1/search?query=who+is+hiring&tags=ask_hn&hitsPerPage=50&page={page}"
+        response = requests.get(url)
+        data = response.json()
+
+        if not data['hits']:
+            break
+    
+        for hit in data['hits']:
+            if hit['title'].startswith('Ask HN: Who is hiring?'):
+                tid = hit['objectID']
+                if tid not in seen:
+                    seen.add(tid)
+                    thread_ids.append(tid)
+        
+        page += 1
+        if page > 5:
+            break
+    
+    return thread_ids
+
+def fetch_jobs(thread_id):
     """
     This function scrapes jobs from Hacker Network's who's hiring job board.
+
+    : params :
+
+    thread_id : str
+        the id of the targeted scraping thread
 
     : attributes : 
 
@@ -27,8 +78,8 @@ def fetch_jobs():
         the url associated with the job listing
     """
 
-    url = HN_URL
-    time.sleep(1)
+    url = f"https://hacker-news.firebaseio.com/v0/item/{thread_id}.json"
+    time.sleep(0.2)
     try:
         response = requests.get(url)
         data = response.json()
@@ -47,10 +98,13 @@ def fetch_jobs():
     
     jobs = []
 
-    comment_ids = data['kids']
+    comment_ids = data.get('kids',[])
+
+    if not comment_ids:
+        return pd.DataFrame()
 
     for cid in comment_ids:
-        time.sleep(1)
+        time.sleep(0.1)
         try:
             comment_url = f"https://hacker-news.firebaseio.com/v0/item/{cid}.json"
             comment = requests.get(comment_url).json()
@@ -140,7 +194,7 @@ def clean_data(df):
 
 def save_db(df):
     # Save to the database
-    engine = create_engine(DB_URL)
+    engine = create_engine(DB_URL, pool_size=1, max_overflow=0)
     with engine.connect() as conn:
         for _, row in df.iterrows():
             try:
@@ -161,11 +215,27 @@ def save_db(df):
 
 if __name__ == '__main__':
     print('Fetching jobs from Hacker Network...')
-    df = fetch_jobs()
-    if df.empty:
-        print('No jobs fetched. Exiting.')
-    else:
+    thread_ids = get_thread_ids()
+    scraped_dates = get_scraped_threads()
+    print(f"Found {len(thread_ids)} threads. Already used {len(scraped_dates)} months")
+
+    for tid in thread_ids:
+        # Check title
+        url = f"https://hacker-news.firebaseio.com/v0/item/{tid}.json"
+        data = requests.get(url).json()
+        title = data.get('title', '')
+        date = title.split('(')[-1].replace(')', '').strip()
+
+        if date in scraped_dates:
+            print(f'Skipping {date} - already scraped')
+            continue
+        
+        print(f"Scraping {date}...")
+        df = fetch_jobs(tid)
+        if df.empty:
+            continue
         print(f"Found {len(df)} jobs")
         df = clean_data(df)
         save_db(df)
-        print('Done!')
+
+    print('Done!')

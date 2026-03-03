@@ -6,12 +6,17 @@
 
 ## Project Overview
 
-This project creates a pipeline that scrapes job data from the websites remoteok.com and weworkremotely.com, cleans the data, and presents it on a dashboard for insights.
+This project creates a pipeline that automatically scrapes job data from the websites remoteok.com, weworkremotely.com, and hackernews.com using GitHub actions. It cleans the data and presents it on a dashboard for insights.
 
 ## Project structure
 
 ```
-job_scraper/
+ job_scraper/
+│
+├── .github/
+│   └── workflows/
+│       ├── scrape.yml          # Daily RemoteOK & WWR automation
+│       └── scrape_hn.yml       # Bi-monthly HN automation
 │
 ├── analysis/
 │   └── analyze.py              # Exploratory data analysis
@@ -19,13 +24,11 @@ job_scraper/
 ├── dashboard/
 │   └── app.py                  # Streamlit dashboard
 │
-├── data/
-│   └── jobs.db                 # SQLite database (not tracked in git)
-│
+├── config.py                   # Centralized configuration
 ├── create_db.py                # Database schema setup
 ├── remote_scraper.py           # RemoteOK scraper
 ├── wwr_scraper.py              # We Work Remotely scraper
-├── scraper.py                  # Practice scraper (fake jobs)
+├── hn_scraper.py               # Hacker News scraper
 ├── requirements.txt            # Python dependencies
 ├── .gitignore                  # Git exclusions
 └── README.md                   # You are here
@@ -53,7 +56,7 @@ pip install -r requirements.txt
 
 Execute in order:
 1. **create_db.py** - Creates a database to house data
-2. **remote_scraper.py** and  **wwr_scraper.py** - Scrapes and cleans data for analysis
+2. **remote_scraper.py**, **wwr_scraper.py**, and **hn_scraper.py** - Scrapes and cleans data for analysis, then appends to the database
 3. **app.py** - Creates a dashboard for visualizing job trends
 
 ---
@@ -92,7 +95,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **Data Sources:** [RemoteOK](https://remoteok.com) & [WeWorkRemotely](https://weworkremotely.com)
+- **Data Sources:** [RemoteOK](https://remoteok.com), [WeWorkRemotely](https://weworkremotely.com) & [Hacker News](https://news.ycombinator.com)
 - **Inspiration:** Understanding the job market of my field
 
 ---
