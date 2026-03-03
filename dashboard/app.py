@@ -138,6 +138,37 @@ def create_dashboard():
     st.line_chart(trends_df)
     st.caption("Number of job postings mentioning each skill over time")
 
+    st.header("Data & Analytics Roles - Focused Analysis")
+
+    data_keywords = ["data analyst", "data science", "data scientist", "data engineer",
+                    "analytics", "machine learning", "business intelligence",
+                    "bi analyst", "ml engineer"]
+
+    data_jobs = df[df["title"].str.lower().str.contains("|".join(data_keywords), na=False)]
+
+    st.metric("Total Data/Analytics Roles", len(data_jobs))
+    # Top companies hiring data roles
+    st.subheader("Top Companies Hiring")
+    company_counts = data_jobs["company"].value_counts().head(15)
+    st.bar_chart(company_counts)
+
+    # percerntage of remote jobs
+    st.subheader("Remote vs Onsite (Data Roles)")
+    data_jobs['is_remote'] = df['location'].str.lower().str.contains('remote', na=False)
+    remote_counts = data_jobs['is_remote'].value_counts().rename({True: 'Remote', False: "Onsite/Other"})
+    st.bar_chart(remote_counts)
+
+    # Salaries for data roles
+    st.subheader("Data Role Salaries")
+    data_with_salary = data_jobs[
+        (data_jobs['salary_min'].notna()) | (data_jobs["salary_range"].fillna("") != "")
+    ]
+    if not data_with_salary.empty:
+        st.dataframe(data_with_salary[['title', "company", "location", "salary_min", 
+                                      "salary_max", "salary_range", "source"]]\
+                                        .reset_index(drop=True))
+    else:
+        st.write("No salary data available for data roles")
 
 if __name__ == '__main__':
     create_dashboard()
