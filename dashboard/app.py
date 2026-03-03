@@ -111,5 +111,33 @@ def create_dashboard():
     st.line_chart(monthly.set_index("month")["remote_pct"])
     st.caption("Percentage of job postings mentioning 'remote' over time")
 
+    # Required skills over time
+    st.header("Skills Evolution (Hacker News)")
+    hn = df[df["source"] == "hackernews"].copy()
+    hn["parsed_date"] = hn["date"].apply(
+        lambda x: datetime.strptime(x, "%B %Y") if isinstance(x, str) and x else None
+    )
+    hn = hn.dropna(subset=["parsed_date"])
+    # Only include years with decent data
+    hn["year"] = hn["parsed_date"].dt.year
+    hn = hn[hn["year"] >= 2015]
+    hn["year"] = hn["year"].astype(str)
+
+    skill_kws = ['python', 'java', 'javascript', 'react', 'cloud', 'aws', 'azure',
+'machine learning', 'ai', 'rust', 'golang', '.NET', 'kubernetes', 'docker',
+'deep learning']
+
+    # Count each skill per year
+    skill_trends = {}
+    for skill in skill_kws:
+        skill_trends[skill] = hn.groupby("year")["title"].apply(
+            lambda titles: titles.str.lower().str.contains(skill, na=False).sum()
+        )
+
+    trends_df = pd.DataFrame(skill_trends)
+    st.line_chart(trends_df)
+    st.caption("Number of job postings mentioning each skill over time")
+
+
 if __name__ == '__main__':
     create_dashboard()

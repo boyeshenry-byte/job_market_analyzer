@@ -4,6 +4,7 @@ import numpy as np
 import time
 import html
 import re
+from datetime import datetime
 from sqlalchemy import create_engine, text
 from config import DB_URL
 
@@ -226,8 +227,10 @@ if __name__ == '__main__':
         title = data.get('title', '')
         date = title.split('(')[-1].replace(')', '').strip()
 
-        if date in scraped_dates:
-            print(f'Skipping {date} - already scraped')
+        current_month = datetime.now().strftime("%B %Y")
+
+        if date in scraped_dates and date != current_month:
+            print(f"Skipping {date} - already scraped")
             continue
         
         print(f"Scraping {date}...")
