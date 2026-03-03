@@ -67,6 +67,9 @@ Execute in order:
 ![Salaries and Job types](figures/screenshot_3.png)
 ![Data Roles](figures/screenshot_4.png)
 
+The full dashboard can be found here: 
+https://job-market-analyzer.streamlit.app
+
 ## 🛠️ Technologies Used
 
 **Core Libraries:**
