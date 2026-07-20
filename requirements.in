@@ -1,0 +1,12 @@
+streamlit
+pandas
+sqlalchemy
+requests
+beautifulsoup4
+lxml
+numpy
+plotly
+psycopg2-binary
+python-dotenv
+dbt-core
+dbt-postgres
