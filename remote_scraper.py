@@ -3,6 +3,7 @@ import requests
 import pandas as pd
 import numpy as np
 import time
+from datetime import date
 from sqlalchemy import create_engine, text
 from config import REMOTEOKURL, HEADERS, DB_URL
 
@@ -96,6 +97,7 @@ def clean_data(df):
 
     # Set date to SQL compatible
     df['date'] = df['date'].astype(str)
+    df['last_seen_date'] = date.today()
 
     return df
 
@@ -112,9 +114,9 @@ def save_db(df):
             try:
               conn.execute(text("""
                     INSERT INTO jobs
-                   (title, company, location, salary_min, salary_max, tags, date, url, source)
-                   VALUES (:title, :company, :location, :salary_min, :salary_max, :tags, :date, :url, :source) 
-                    ON CONFLICT DO NOTHING
+                   (title, company, location, salary_min, salary_max, tags, date, url, source, last_seen_date)
+                   VALUES (:title, :company, :location, :salary_min, :salary_max, :tags, :date, :url, :source, :last_seen_date) 
+                    ON CONFLICT (title, company, source) DO UPDATE SET last_seen_date = :last_seen_date
                """), dict(row))
             except Exception as e:
                print(f"Error: {e}")
