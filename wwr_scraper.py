@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import time
 from bs4 import BeautifulSoup
+from datetime import date
 from sqlalchemy import create_engine, text
 from config import WWR_URL, HEADERS, DB_URL
 
@@ -101,6 +102,9 @@ def clean_data(df):
     # Store data
     df['source'] = 'weworkremotely'
 
+    # Set date
+    df['date'] = date.today()
+
     return df
 
 def save_db(df):
@@ -116,9 +120,9 @@ def save_db(df):
             try:
                 conn.execute(text("""
                     insert into jobs
-                    (title, company, location, salary_range, job_type, region, source)
-                    values (:title, :company, :location, :salary_range, :job_type, :region, :source)
-                    on conflict do nothing
+                    (title, company, location, salary_range, job_type, region, source, date, last_seen_date)
+                    values (:title, :company, :location, :salary_range, :job_type, :region, :source, :date, :date)
+                    on conflict (title, company, source) do update set last_seen_date = :date
                 """), dict(row))
             except Exception as e:
                 print(f"Error: {e}")
